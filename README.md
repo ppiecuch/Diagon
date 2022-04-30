@@ -43,22 +43,11 @@ Make diagon easy to use inside your IDE. Thanks to contributors:
 
 **Table of content**
  * [Diagon](#diagon)
- * [Build dependencies](#build-dependencies)
  * [Generators](#generators)
-    * [Mathematic Expression](#mathematic-expression)
-    * [Sequence Diagram](#sequence-diagram)
-    * [Tree](#tree)
-    * [Frame](#frame)
-    * [Table](#table)
-    * [Planar graph](#planar-graph)
  * [Command line interface](#command-line-interface)
+ * [Download packages](#download-packages)
+ * [Build](#build)
  * [Thanks](#thanks)
-
-# Build dependencies
-
-As every C++ projects, this build using cmake.
-
-On Linux, if it isn't already installed, this depends on `uuid-dev`.
 
 # Generators
 
@@ -607,6 +596,23 @@ Output:
    
 </details>
 
+# Download packages
+
+Binaries using multiple formats are provided in the [release](https://github.com/ArthurSonzogni/Diagon/releases) section.
+
+# Build
+
+This depends on cmake, uuid-dev and libboost-graph-dev
+On Linux:
+```sh
+sudo apt install make uuid-dev libboost-graph-dev cmake default-jdk;
+mkdir build;
+cd build;
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j
+sudo make install 
+```
+            
 # Thanks
 
 This project has been possible thanks to these great projects
