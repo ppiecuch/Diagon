@@ -12,4 +12,6 @@ endif()
 
 target_link_libraries(translator_graph_planar PRIVATE diagon_base)
 target_link_libraries(translator_graph_planar PRIVATE antlr4_static)
+target_link_libraries(translator_graph_planar PRIVATE boost_graph)
+
 target_set_common(translator_graph_planar)

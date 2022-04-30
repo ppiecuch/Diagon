@@ -37,6 +37,28 @@ endif()
 
 #-------------------------------------------------------------------------------
 
+FetchContent_Declare(
+  boost
+  GIT_REPOSITORY https://github.com/boostorg/boost.git
+  GIT_TAG develop
+  GIT_SHALLOW TRUE)
+
+FetchContent_GetProperties(boost)
+if(NOT boost_POPULATED)
+  FetchContent_Populate(boost)
+  SET(BUILD_SHARED_LIBS   OFF)
+  SET(CMAKE_HOME_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  add_subdirectory(
+    ${boost_SOURCE_DIR}
+    ${boost_BINARY_DIR}
+    EXCLUDE_FROM_ALL)
+  target_include_directories(boost_graph
+    PUBLIC ${boost_SOURCE_DIR}/libs/graph/include
+  )
+endif()
+
+#-------------------------------------------------------------------------------
+
 if (MSVC)
   add_compile_options("/utf-8")
 endif()
@@ -168,8 +190,9 @@ if (EMSCRIPTEN)
 
 else()
   target_link_libraries(diagon_lib PRIVATE -static-libstdc++)
-  target_link_libraries(diagon_lib PRIVATE stdc++fs)
-
+  if(NOT APPLE)
+    target_link_libraries(diagon_lib PRIVATE stdc++fs)
+  endif()
   install(TARGETS diagon RUNTIME DESTINATION "bin")
 
   add_executable(input_output_test src/input_output_test.cpp)
