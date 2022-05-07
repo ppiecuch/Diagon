@@ -1,2 +1,3 @@
 const char* test_directory = "@test_directory@";
 const char* git_version = "@git_version@";
+const char* diagon_version = "@PROJECT_VERSION@";

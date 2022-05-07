@@ -64,9 +64,9 @@ int main(int, const char**) {
       std::string output_computed = translator->Translate(input, options);
 
       if (output_computed == output) {
-        std::cout << "  [PASS] " << test << std::endl;
+        std::cout << "  [PASS] " << test.path() << std::endl;
       } else {
-        std::cout << "  [FAIL] " << test << std::endl;
+        std::cout << "  [FAIL] " << test.path() << std::endl;
         std::cout << "---[Output]------------------" << std::endl;
         std::cout << output_computed << std::endl;
         std::cout << "---[Expected]----------------" << std::endl;
