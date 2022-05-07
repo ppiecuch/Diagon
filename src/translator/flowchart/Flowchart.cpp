@@ -314,20 +314,22 @@ std::vector<std::wstring_view> Broke(std::wstring_view content) {
   // This is a bisection.
   int left = 0;
   int right = content.size();
-  while (left + 1 < right) {
-    int middle = left + (right - left) / 2;
-    int lines = Broke(content, middle).size();
-    float r = middle / float(lines);
-    bool still_good = r >= 10.0 || lines == 1;
-    (still_good ? right : left) = middle;
-  }
-  int lines_number = Broke(content, right).size();
-  if (lines_number == 1)
-    return {content};
+  if (right > 0) {
+    while (left + 1 < right) {
+      int middle = left + (right - left) / 2;
+      int lines = Broke(content, middle).size();
+      float r = middle / float(lines);
+      bool still_good = r >= 10.0 || lines == 1;
+      (still_good ? right : left) = middle;
+    }
+    int lines_number = Broke(content, right).size();
+    if (lines_number == 1)
+      return {content};
 
-  do {
-    right--;
-  } while (Broke(content, right).size() == lines_number);
+    do {
+      right--;
+    } while (Broke(content, right).size() == lines_number);
+  }
   right++;
 
   return Broke(content, right);
@@ -472,6 +474,9 @@ Draw Unimplemented(bool is_final) {
 }
 
 std::string Parse(FlowchartParser::StringContext* string) {
+  if (!string)
+    return "error_Parse_string";
+
   if (string->STRING_DOUBLE_QUOTE()) {
     std::string text = string->STRING_DOUBLE_QUOTE()->getSymbol()->getText();
     text = text.substr(1, text.size() - 2);
@@ -500,6 +505,9 @@ void AddLabel(Screen& screen, Point point, std::wstring_view label) {
 }
 
 Draw Parse(FlowchartParser::ConditionContext* condition, bool is_final) {
+  if (condition->instruction().size() == 0)
+    return Draw();
+
   if (condition->instruction().size() == 1) {
     //Point if_right;
     Draw if_ = Diamond(Parse(condition->string()), /*is_final=*/false);

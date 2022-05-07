@@ -881,6 +881,9 @@ std::wstring ParseStringLatex(antlr4::tree::TerminalNode* node) {
 Draw Parse(MathParser::AtomContext* context,
            Style* style,
            bool suppress_parenthesis) {
+  if (!context)
+    return Draw();
+
   if (context->variable())
     return Parse(context->variable(), style);
 
