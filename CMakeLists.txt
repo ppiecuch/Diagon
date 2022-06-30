@@ -17,6 +17,11 @@ project(Diagon
   VERSION 1.0.127
 )
 
+if (APPLE)
+  set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -arch arm64 -arch x86_64 -mmacosx-version-min=10.15")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -arch arm64 -arch x86_64 -mmacosx-version-min=10.15")
+endif(APPLE)
+
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
@@ -61,7 +66,7 @@ endif()
 FetchContent_Declare(
   boost
   GIT_REPOSITORY https://github.com/boostorg/boost.git
-  GIT_TAG develop
+  GIT_TAG boost-1.79.0
   GIT_SHALLOW TRUE)
 
 FetchContent_GetProperties(boost)

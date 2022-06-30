@@ -67,8 +67,8 @@ else if ("OKAY, YOU SEE THE LINE LABELED 'YES'?") {
 }
 
 struct Point {
-  int x;
-  int y;
+  int x = 0;
+  int y = 0;
 };
 
 struct Draw {
@@ -627,10 +627,11 @@ Draw Parse(FlowchartParser::GroupContext* group, bool is_final) {
 
 Draw Parse(FlowchartParser::ProgramContext* program, bool is_final) {
   Draw out;
-  int n = program->instruction().size();
-  for (int i = 0; i < n; ++i) {
-    out = ConnectVertically(std::move(out), Parse(program->instruction()[i],
-                                                  is_final && (i == n - 1)));
+  if (int n = program->instruction().size()) {
+    for (int i = 0; i < n; ++i) {
+      out = ConnectVertically(std::move(out), Parse(program->instruction()[i],
+                                                    is_final && (i == n - 1)));
+    }
   }
   return out;
 }

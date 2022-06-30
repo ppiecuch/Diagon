@@ -252,6 +252,7 @@ rhs = identifier
 rule = lhs , "=" , rhs , ";" ;
 grammar = { rule } ;
 )--",
+          "input\niso-ebnf",
       },
       {"WSN - WSN",
        R"--(
@@ -266,7 +267,9 @@ FACTOR     = IDENTIFIER
           | "{" EXPRESSION "}" .
 IDENTIFIER = letter { letter } .
 LITERAL    = """" character { character } """" .
-)--"},
+)--",
+       "input\nwsn",
+      },
   };
 }
 
@@ -310,14 +313,13 @@ std::string Grammar::Translate(const std::string& input,
 
   int error = output_function(model);
   (void)error;
+  fflush(stdout);
   dup2(old_stdout, 1);
   close(old_stdout);
   fclose(file_write);
 
-
   auto file_read = std::ifstream("/tmp/diagon_grammer.txt");
-  return std::string((std::istreambuf_iterator<char>(file_read)),
-                     std::istreambuf_iterator<char>());
+  return std::string((std::istreambuf_iterator<char>(file_read)), std::istreambuf_iterator<char>());
 }
 #else
 std::string Grammar::Translate(const std::string& input,

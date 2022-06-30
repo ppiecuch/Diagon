@@ -6,7 +6,7 @@ COMMENT: '/*' .*? '*/' -> skip;
 LINE_COMMENT: '//' .*? '\r'? '\n' -> skip;
 
 // Program
-program: instruction*;
+program: instruction instruction*;
 
 instruction: noop
            | element

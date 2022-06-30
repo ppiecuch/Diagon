@@ -194,6 +194,8 @@ void Screen::ASCIIfy(int style) {
 }
 
 wchar_t& Screen::Pixel(int x, int y) {
+  assert(lines_.size() > y);
+  assert(lines_[y].size() > x);
   return lines_[y][x];
 }
 

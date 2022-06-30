@@ -132,7 +132,7 @@ int PrintTranslatorExamples(Translator* translator) {
     std::cout << "  " << (++i) << ") input" << std::endl;
     std::cout << "     " << input;
 
-    std::string output = translator->Translate(it.input, "");
+    std::string output = translator->Translate(it.input, it.options);
     output = FindTranslator("Frame")->Translate(output, "line_number\nfalse");
     replaceAll(output, "\n", "\n     ");
     std::cout << " output" << std::endl;

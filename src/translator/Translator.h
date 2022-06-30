@@ -36,6 +36,7 @@ class Translator {
   struct Example {
     std::string title;
     std::string input;
+    std::string options;
   };
   virtual std::vector<Example> Examples() { return {}; }
 };
