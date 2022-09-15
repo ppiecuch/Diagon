@@ -35,7 +35,7 @@ void ParseDirectoryName(std::string name,
   parts.push_back(name.substr(left, right - left));
 
   *translator_name = parts[0];
-  for(int i = 1; i<parts.size(); ++i) {
+  for (int i = 1; i < parts.size(); ++i) {
     *options += parts[i] + "\n";
   }
 }
@@ -73,8 +73,6 @@ int main(int, const char**) {
         std::cout << output << std::endl;
         std::cout << "---------------------" << std::endl;
         result = EXIT_FAILURE;
-
-        //std::ofstream(test.path() / "output") << output_computed;
       }
     }
   }
