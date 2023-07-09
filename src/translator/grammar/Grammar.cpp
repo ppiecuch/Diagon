@@ -319,8 +319,7 @@ std::string Grammar::Translate(const std::string& input,
     error_count++;
     kgt::parsing_error error;
     parsing_error_queue_pop(&parsing_errors, &error);
-    std::cerr << error.line << ":" << error.column << ":" << error.description
-              << std::endl;
+    std::cerr << error.line << ":" << error.col << ":" << error.description << std::endl;
   }
 
   fflush(stdout);

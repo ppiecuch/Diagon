@@ -5,6 +5,12 @@
 
 using json = nlohmann::json;
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#else
+#define EMSCRIPTEN_KEEPALIVE
+#endif
+
 template <class T>
 json API(const std::vector<T>& container) {
   auto json = json::array();
@@ -20,6 +26,8 @@ std::string API(const Translator::Widget& type) {
     case Translator::Widget::Checkbox:
       return "checkbox";
   }
+  // NOTREACHED
+  return "combobox";
 }
 
 json API(const Translator::OptionDescription& option) {
@@ -48,6 +56,7 @@ json API(const TranslatorPtr& translator) {
   return json;
 }
 
+EMSCRIPTEN_KEEPALIVE
 extern "C" const char* API() {
   static std::string out;
   if (out.size() == 0)

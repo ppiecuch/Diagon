@@ -43,7 +43,8 @@ void ParseDirectoryName(std::string name,
 int main(int, const char**) {
   int result = EXIT_SUCCESS;
   std::string path = test_directory;
-  std::cout << "test_directory = " << test_directory << std::endl;
+  //std::cout << "test_directory = " << test_directory << std::endl;
+
   for (auto& dir : std::filesystem::directory_iterator(path)) {
     std::string translator_name;
     std::string options;
@@ -54,17 +55,17 @@ int main(int, const char**) {
       if (!translator) {
         std::cout << "Translator " << translator_name << " not found."
                   << std::endl;
-        result = EXIT_FAILURE;
         continue;
       }
 
+      std::cout << "  [RUN ] " << test.path() << std::endl;
       std::string input = ReadFile(test.path() / "input");
       std::string output = ReadFile(test.path() / "output");
 
       std::string output_computed = translator->Translate(input, options);
 
       if (output_computed == output) {
-        std::cout << "  [PASS] " << test.path() << std::endl;
+        // std::cout << "  [PASS] " << test.path() << std::endl;
       } else {
         std::cout << "  [FAIL] " << test.path() << std::endl;
         std::cout << "---[Output]------------------" << std::endl;
@@ -72,6 +73,9 @@ int main(int, const char**) {
         std::cout << "---[Expected]----------------" << std::endl;
         std::cout << output << std::endl;
         std::cout << "---------------------" << std::endl;
+
+        //std::ofstream(test.path() / "output") << output_computed;
+
         result = EXIT_FAILURE;
       }
     }

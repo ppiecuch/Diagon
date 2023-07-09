@@ -1,21 +1,18 @@
-cmake_minimum_required (VERSION 3.11)
+cmake_minimum_required (VERSION 3.15)
 
-set(git_version 0)
-find_package(Git)
-if (Git_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} rev-list --count HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE git_version
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-endif()
-message(STATUS "diagon git_version: ${git_version}")
-
+set(git_version 156) # Obtained with `git rev-list --count HEAD`
 project(Diagon
   LANGUAGES C CXX
-  VERSION 1.0.127
+  VERSION 1.1.${git_version}
 )
+
+option(DIAGON_BUILD_TESTS "Set to ON to build tests" OFF)
+option(DIAGON_BUILD_TESTS_FUZZER "Set to ON to enable fuzzing" OFF)
+option(DIAGON_ASAN "Set to ON to enable address sanitizer" OFF)
+option(DIAGON_LSAN "Set to ON to enable leak sanitizer" OFF)
+option(DIAGON_MSAN "Set to ON to enable memory sanitizer" OFF)
+option(DIAGON_TSAN "Set to ON to enable thread sanitizer" OFF)
+option(DIAGON_UBSAN "Set to ON to enable undefined behavior sanitizer" OFF)
 
 if (APPLE)
   set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -arch arm64 -arch x86_64 -mmacosx-version-min=10.15")
@@ -42,8 +39,11 @@ endif()
 #-------------------------------------------------------------------------------
 
 FetchContent_Declare(antlr
-  GIT_REPOSITORY https://github.com/antlr/antlr4
-  GIT_TAG 4.8
+  #GIT_REPOSITORY https://github.com/antlr/antlr4
+  GIT_REPOSITORY https://github.com/ArthurSonzogni/antlr4
+  # GIT_TAG 1cb4669f84cea5b59661fd44b0f80509fdacd3f9
+  GIT_TAG remove-pthread
+  GIT_SHALLOW FALSE
   GIT_PROGRESS TRUE
 )
 
@@ -97,8 +97,12 @@ function(target_set_common target)
     CXX_STANDARD 17
   )
   if (EMSCRIPTEN)
+    target_compile_options(${target} PRIVATE "-fwasm-exceptions")
+    target_link_options(${target} PRIVATE "-fwasm-exceptions")
     # Nothing
   elseif (MSVC)
+    set_property(TARGET ${target} PROPERTY
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     target_compile_options(${target} PRIVATE "/wd4244")
     target_compile_options(${target} PRIVATE "/wd4267")
     target_compile_options(${target} PRIVATE "/wd4996")
@@ -115,8 +119,6 @@ set(test_directory ${CMAKE_CURRENT_SOURCE_DIR}/test)
 # Include source files and the generated files
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-set(test_directory ${CMAKE_CURRENT_SOURCE_DIR}/test)
 
 #-------------------------------------------------------------------------------
 # Environment variable available in C++ source
@@ -140,6 +142,7 @@ target_link_libraries(diagon_base
 )
 target_set_common(diagon_base)
 
+set(Boost_USE_STATIC_LIBS   ON)
 add_subdirectory(src/screen)
 add_subdirectory(src/translator/frame)
 add_subdirectory(src/translator/grammar)
@@ -191,8 +194,7 @@ if (EMSCRIPTEN)
   #string(APPEND CMAKE_CXX_FLAGS " -s WASM_ASYNC_COMPILATION=0")
   #string(APPEND CMAKE_CXX_FLAGS " -s SIDE_MODULE=1")
   #string(APPEND CMAKE_CXX_FLAGS " -s DISABLE_EXCEPTION_CATCHING=0")
-  string(APPEND CMAKE_CXX_FLAGS " -s EXPORTED_FUNCTIONS='[\"_translate\", \"_main\", \"_API\"]'")
-  string(APPEND CMAKE_CXX_FLAGS " -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]'")
+  string(APPEND CMAKE_CXX_FLAGS " -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]'")
 
   option(ADD_GOOGLE_ANALYTICS "Build the static library" ON)
   if (ADD_GOOGLE_ANALYTICS)
@@ -214,15 +216,14 @@ if (EMSCRIPTEN)
   #set_target_properties(diagon PROPERTIES SUFFIX ".wasm")
 
 else()
+<<<<<<< HEAD
   target_link_libraries(diagon_lib PRIVATE -static-libstdc++)
   if(NOT APPLE)
     target_link_libraries(diagon_lib PRIVATE stdc++fs)
   endif()
+=======
+>>>>>>> 81d56ea7402f15813ffc7ca0a309b84c7b366035
   install(TARGETS diagon RUNTIME DESTINATION "bin")
-
-  add_executable(input_output_test src/input_output_test.cpp)
-  target_link_libraries(input_output_test diagon_lib)
-  target_set_common(input_output_test)
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -255,3 +256,11 @@ set(CPACK_DEBIAN_PACKAGE_VERSION ${PROJECT_VERSION})
 set(CPACK_RPM_PACKAGE_LICENSE MIT)
 
 include(CPack)
+
+if (DIAGON_BUILD_TESTS)
+  include(cmake/diagon_test.cmake)
+endif()
+
+if (DIAGON_BUILD_TESTS_FUZZER)
+  include(cmake/diagon_fuzzer.cmake)
+endif()

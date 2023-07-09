@@ -59,7 +59,7 @@ function : variable LPAREN equation (',' equation)* RPAREN ;
 variable : VARIABLE;
 matrix : LBRACKET matrixLine (';' matrixLine)* RBRACKET;
 matrixLine : expression ( ',' expression ) *;
-relop : EQ | GT | LT | GE | LE;
+relop : EQ | GT | LT | GE | LE | LIME;
 addop : PLUS | MINUS ;
 mulop : TIMES | DIV ;
 powop : POW | SUBSCRIPT ;
@@ -77,6 +77,7 @@ MINUS : '-' ;
 TIMES : '*' ;
 BANG: '!';
 DIV : '/' ;
+LIME : '->' ; 
 GT : '>' ; 
 LT : '<' ; 
 GE : '>=' ; 
@@ -85,9 +86,13 @@ EQ : '=' ;
 POW : '^' ;
 SUBSCRIPT: '_' ;
 EOL : '\r\n' | '\n' ;
-WS : [ \t] + -> skip ; 
 
 fragment CHAR : ~[!+-<>=_^(){}[\] \t\r\n"*] | [.0123456789];
 VARIABLE: CHAR+;
+
+// Ignored TOKENS
+WS: [ \t]+ -> channel(HIDDEN);
+COMMENT: '/' '*' .*? '*' '/' -> channel(HIDDEN);
+LINE_COMMENT: '/' '/' .*? ('\n' | EOF) -> channel(HIDDEN);
 
 // vim: filetype=antlr

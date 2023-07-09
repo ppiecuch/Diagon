@@ -95,11 +95,13 @@ class Sequence : public Translator {
   int GetNumber(SequenceParser::NumberContext* number);
   std::wstring GetText(SequenceParser::TextContext* text);
 
+  // 1.1) Check input validity.
+  bool ContainsSelfMessage();
+
   // 2) Clean the representation.
   void UniformizeInternalRepresentation();
   void UniformizeActors();
   void UniformizeMessageID();
-
   void SplitByBackslashN();
 
   // 3) Layout.
@@ -119,6 +121,7 @@ class Sequence : public Translator {
   std::vector<Example> Examples() final;
   std::string Translate(const std::string& input,
                         const std::string& options_string) override;
+  std::string Highlight(const std::string& input) override;
 
   std::vector<Actor> actors;
   std::vector<Message> messages;

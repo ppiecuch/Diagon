@@ -286,6 +286,9 @@ std::string Sequence::Translate(const std::string& input,
 
   ComputeInternalRepresentation(input);
   UniformizeInternalRepresentation();
+  if (actors.size() == 0)
+    return "";
+
   SplitByBackslashN();
   Layout();
   return Draw();
@@ -359,7 +362,7 @@ void Sequence::UniformizeMessageID() {
     for (auto& message : messages) {
       if (message.id != -1) {
         if (used.count(message.id)) {
-          std::cout << "Found two messages with the same id: " << message.id
+          std::cerr << "Found two messages with the same id: " << message.id
                     << std::endl;
           message.id = -1;
         } else {
@@ -383,10 +386,10 @@ void Sequence::UniformizeMessageID() {
         for (int id : {dependency.from, dependency.to}) {
           auto it = message_index.find(id);
           if (it == message_index.end()) {
-            std::wcout << "* Ignored dependency: \"" << actor.name << ": "
+            std::wcerr << "* Ignored dependency: \"" << actor.name << ": "
                        << dependency.from << " < " << dependency.to << "\"."
                        << std::endl;
-            std::wcout << "  It cannot be used because the message ID \"" << id
+            std::wcerr << "  It cannot be used because the message ID \"" << id
                        << "\" doesn't exist" << std::endl;
             return true;
           }
@@ -394,10 +397,10 @@ void Sequence::UniformizeMessageID() {
           const Message& message = messages[it->second];
           if (actor.name != message.from &&  //
               actor.name != message.to) {
-            std::wcout << "* Ignored dependency: \"" << actor.name << ": "
+            std::wcerr << "* Ignored dependency: \"" << actor.name << ": "
                        << dependency.from << " < " << dependency.to << "\"."
                        << std::endl;
-            std::wcout << "  It cannot be used because the message \""
+            std::wcerr << "  It cannot be used because the message \""
                        << message.from << " -> " << message.to << ": "
                        << message.messages[0]
                        << "\" has nothing to do with actor " << actor.name
@@ -456,13 +459,21 @@ void Sequence::AddMessageCommand(
   Message message;
   if (auto dependency_id = message_command->dependencyID()) {
     message.id =
-        std::stoi(dependency_id->number()->Number()->getSymbol()->getText());
+        std::stoi(dependency_id->number()->NUMBER()->getSymbol()->getText());
   }
 
   message.from = GetText(message_command->text(0));
   message.to = GetText(message_command->text(1));
 
-  if (message_command->arrow()->NormalLeftArrow()) {
+  if (message.from == message.to) {
+    std::cerr << "Self messages are not supported yet. It has been ignored."
+              << std::endl;
+    std::cerr << "See https://github.com/ArthurSonzogni/Diagon/issues/63"
+              << std::endl;
+    return;
+  }
+
+  if (message_command->arrow()->ARROW_LEFT()) {
     std::swap(message.from, message.to);
   }
 
@@ -484,9 +495,9 @@ void Sequence::AddDependencyCommand(
     auto numbers = dependency->number();
     auto comparison = dependency->comparison();
     for (int i = 0; i < comparison.size(); ++i) {
-      int left = std::stoi(numbers[i]->Number()->getSymbol()->getText());
-      int right = std::stoi(numbers[i + 1]->Number()->getSymbol()->getText());
-      if (comparison[i]->More()) {
+      int left = std::stoi(numbers[i]->NUMBER()->getSymbol()->getText());
+      int right = std::stoi(numbers[i + 1]->NUMBER()->getSymbol()->getText());
+      if (comparison[i]->GREATER()) {
         std::swap(left, right);
       }
       actor.dependencies.insert(Dependency{left, right});
@@ -499,7 +510,7 @@ std::wstring Sequence::GetText(SequenceParser::TextContext* text) {
 }
 
 int Sequence::GetNumber(SequenceParser::NumberContext* number) {
-  return std::stoi(number->Number()->getSymbol()->getText());
+  return std::stoi(number->NUMBER()->getSymbol()->getText());
 }
 
 void Sequence::Layout() {
@@ -537,7 +548,8 @@ void Sequence::LayoutComputeActorsPositions() {
     spaces.push_back(space);
   }
 
-  actors[0].center = actors[0].name.size() / 2 + 1;
+  if (actors.size() != 0)
+    actors[0].center = actors[0].name.size() / 2 + 1;
 
   bool modified = true;
   int i = 0;
@@ -550,7 +562,7 @@ void Sequence::LayoutComputeActorsPositions() {
       }
     }
     if (i++ > 500) {
-      std::cout << "Something went wrong!" << std::endl;
+      std::cerr << "Something went wrong!" << std::endl;
       break;
     }
   }
@@ -695,4 +707,40 @@ std::string Sequence::Draw() {
 
 std::unique_ptr<Translator> SequenceTranslator() {
   return std::make_unique<Sequence>();
+}
+
+std::string Sequence::Highlight(const std::string& input) {
+  std::stringstream out;
+
+  antlr4::ANTLRInputStream input_stream(input);
+
+  // Lexer.
+  SequenceLexer lexer(&input_stream);
+  antlr4::CommonTokenStream tokens(&lexer);
+
+  try {
+    tokens.fill();
+  }
+  catch (...) {  // Ignore
+  }
+
+  size_t matched = 0;
+  out << "<span class='Sequence'>";
+  for(antlr4::Token* token : tokens.getTokens()) {
+    std::string text = token->getText();
+    if (text == "<EOF>") {
+      continue;
+    }
+    out << "<span class='";
+    out << lexer.getVocabulary().getSymbolicName(token->getType());
+    out << "'>";
+    matched += text.size();
+    out << std::move(text);
+    out << "</span>";
+  }
+
+  out << input.substr(matched);
+  out << "</span>";
+
+  return out.str();
 }

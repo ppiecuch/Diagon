@@ -6,9 +6,9 @@
 #include <vector>
 #include "screen/Screen.h"
 #include "translator/Translator.h"
+#include "translator/antlr_error_listener.h"
 #include "translator/math/MathLexer.h"
 #include "translator/math/MathParser.h"
-#include "translator/antlr_error_listener.h"
 
 class Screen;
 
@@ -30,6 +30,7 @@ struct Style {
   wchar_t multiply;
   std::wstring lower_or_equal;
   std::wstring greater_or_equal;
+  std::wstring lime;
 
   wchar_t left_parenthesis_0;
   wchar_t left_parenthesis_1;
@@ -76,8 +77,8 @@ Draw Parse(MathParser::ValueBangContext* context, Style*, bool);
 Draw Parse(MathParser::ValueContext*, Style*, bool suppress_parenthesis);
 Draw Parse(MathParser::AtomContext*, Style*, bool suppress_parenthesis);
 Draw Parse(MathParser::VariableContext*, Style* style);
-Draw ComposeHorizontal(const Draw& left, const Draw& right, int spaces);
-Draw ComposeVertical(const Draw& top, const Draw& down, int spaces);
+Draw ComposeHorizontal(const Draw& left, const Draw& right, int spaces = 0);
+Draw ComposeVertical(const Draw& top, const Draw& down, int spaces = 0);
 Draw ComposeDiagonal(const Draw& A, const Draw& B);
 Draw WrapWithParenthesis(const Draw& element, Style* style);
 std::string to_string(const Draw& draw);
@@ -293,6 +294,7 @@ Draw Parse(MathParser::EquationContext* context, Style* style) {
     else if (op->LE()) symbol = style->lower_or_equal;
     else if (op->GE()) symbol = style->greater_or_equal;
     else if (op->EQ()) symbol = L'=';
+    else if (op->LIME()) symbol = style->lime;
     // clang-format on
 
     int op_x = draw.dim_x + 1;
@@ -317,6 +319,7 @@ std::wstring ParseLatex(MathParser::EquationContext* context, Style* style) {
     else if (op->GT()) out += L" > ";
     else if (op->LE()) out += L" \\leq ";
     else if (op->GE()) out += L" \\geq ";
+    else if (op->LIME()) out += L" \\to ";
     else if (op->EQ()) out += L" = ";
     // clang-format on
 
@@ -540,6 +543,57 @@ std::wstring ParseFunctionSumLatex(MathParser::FunctionContext* context,
   return out + L" " + ParseLatex(context->equation(0), style);
 }
 
+bool CheckFunctionLimit(MathParser::FunctionContext* context) {
+  int num_arguments = context->equation().size();
+  if (num_arguments != 2) {
+    std::cerr << "Limit function (lim) only handle 2 arguments, but "
+              << num_arguments << " provided" << std::endl;
+    return false;
+  }
+  return true;
+}
+
+Draw ParseFunctionLimit(MathParser::FunctionContext* context, Style* style) {
+  if (!CheckFunctionLimit(context))
+    return Draw(L"(error)");
+
+  Draw lim = Parse(context->variable(), style);
+  Draw down = Parse(context->equation(0), style);
+  Draw right = Parse(context->equation(1), style);
+
+  if (right.center_y == right.dim_y-1) {
+    Draw lim_right = ComposeHorizontal(lim, right, 1);
+    lim_right.center_x = 0;
+    down.center_x = 0;
+    Draw out = ComposeVertical(lim_right, down);
+    out.center_x = lim_right.dim_x - 1;
+    out.center_y = 0;
+    return out;
+  }
+
+  // Align center `lim` with `down`.
+  lim.center_x = 0;
+  down.center_x = 0;
+  Draw lim_down = ComposeVertical(std::move(lim), std::move(down));
+
+  // Align |lim_down| and right to the correct baseline.
+  lim_down.center_x = lim.dim_x / 2;
+  lim_down.center_y = 0;
+  right.center_x = right.dim_x / 2;
+  return ComposeHorizontal(std::move(lim_down), std::move(right), 1);
+}
+
+std::wstring ParseFunctionLimitLatex(MathParser::FunctionContext* context,
+                                     Style* style) {
+  if (!CheckFunctionLimit(context))
+    return L"(error)";
+
+  std::wstring out = L"\\lim";
+  if (context->equation(0))
+    out += L"_{" + ParseLatex(context->equation(0), style) + L"}";
+  return out + L" " + ParseLatex(context->equation(1), style);
+}
+
 bool CheckFunctionMult(MathParser::FunctionContext* context) {
   int num_arguments = context->equation().size();
   if (num_arguments > 3) {
@@ -602,71 +656,71 @@ std::wstring ParseFunctionMultLatex(MathParser::FunctionContext* context,
 
 Draw ParseFunctionMathBB(MathParser::FunctionContext* context, Style* style) {
   static const std::map<std::string, std::string> known = {
-      {"0", "𝟘"},      //
-      {"1", "𝟙"},      //
-      {"2", "𝟚"},      //
-      {"3", "𝟛"},      //
-      {"4", "𝟜"},      //
-      {"5", "𝟝"},      //
-      {"6", "𝟞"},      //
-      {"7", "𝟟"},      //
-      {"8", "𝟠"},      //
-      {"9", "𝟡"},      //
-      {"A", "𝔸"},      //
-      {"B", "𝔹"},      //
-      {"C", "ℂ"},      //
-      {"D", "𝔻"},      //
-      {"E", "𝔼"},      //
-      {"F", "𝔽"},      //
-      {"G", "𝔾"},      //
-      {"H", "ℍ"},      //
-      {"I", "𝕀"},      //
-      {"J", "𝕁"},      //
-      {"K", "𝕂"},      //
-      {"L", "𝕃"},      //
-      {"M", "𝕄"},      //
-      {"N", "ℕ"},      //
-      {"O", "𝕆"},      //
-      {"P", "ℙ"},      //
-      {"PI", "ℿ"},     //
-      {"Q", "ℚ"},      //
-      {"R", "ℝ"},      //
-      {"S", "𝕊"},      //
-      {"T", "𝕋"},      //
-      {"U", "𝕌"},      //
-      {"V", "𝕍"},      //
-      {"W", "𝕎"},      //
-      {"X", "𝕏"},      //
-      {"Y", "𝕐"},      //
-      {"Z", "ℤ"},      //
-      {"a", "𝕒"},      //
-      {"b", "𝕓"},      //
-      {"c", "𝕔"},      //
-      {"d", "𝕕"},      //
-      {"e", "𝕖"},      //
-      {"f", "𝕗"},      //
-      {"g", "𝕘"},      //
-      {"h", "𝕙"},      //
-      {"i", "ⅈ"},      //
-      {"i", "𝕚"},      //
-      {"j", "𝕛"},      //
-      {"k", "𝕜"},      //
-      {"l", "𝕝"},      //
-      {"m", "𝕞"},      //
-      {"n", "𝕟"},      //
-      {"o", "𝕠"},      //
-      {"p", "𝕡"},      //
-      {"pi", "ℼ"},     //
-      {"q", "𝕢"},      //
-      {"r", "𝕣"},      //
-      {"s", "𝕤"},      //
-      {"t", "𝕥"},      //
-      {"u", "𝕦"},      //
-      {"v", "𝕧"},      //
-      {"w", "𝕨"},      //
-      {"x", "𝕩"},      //
-      {"y", "𝕪"},      //
-      {"z", "𝕫"},      //
+      {"0", "𝟘"},   //
+      {"1", "𝟙"},   //
+      {"2", "𝟚"},   //
+      {"3", "𝟛"},   //
+      {"4", "𝟜"},   //
+      {"5", "𝟝"},   //
+      {"6", "𝟞"},   //
+      {"7", "𝟟"},   //
+      {"8", "𝟠"},   //
+      {"9", "𝟡"},   //
+      {"A", "𝔸"},   //
+      {"B", "𝔹"},   //
+      {"C", "ℂ"},   //
+      {"D", "𝔻"},   //
+      {"E", "𝔼"},   //
+      {"F", "𝔽"},   //
+      {"G", "𝔾"},   //
+      {"H", "ℍ"},   //
+      {"I", "𝕀"},   //
+      {"J", "𝕁"},   //
+      {"K", "𝕂"},   //
+      {"L", "𝕃"},   //
+      {"M", "𝕄"},   //
+      {"N", "ℕ"},   //
+      {"O", "𝕆"},   //
+      {"P", "ℙ"},   //
+      {"PI", "ℿ"},  //
+      {"Q", "ℚ"},   //
+      {"R", "ℝ"},   //
+      {"S", "𝕊"},   //
+      {"T", "𝕋"},   //
+      {"U", "𝕌"},   //
+      {"V", "𝕍"},   //
+      {"W", "𝕎"},   //
+      {"X", "𝕏"},   //
+      {"Y", "𝕐"},   //
+      {"Z", "ℤ"},   //
+      {"a", "𝕒"},   //
+      {"b", "𝕓"},   //
+      {"c", "𝕔"},   //
+      {"d", "𝕕"},   //
+      {"e", "𝕖"},   //
+      {"f", "𝕗"},   //
+      {"g", "𝕘"},   //
+      {"h", "𝕙"},   //
+      {"i", "ⅈ"},   //
+      {"i", "𝕚"},   //
+      {"j", "𝕛"},   //
+      {"k", "𝕜"},   //
+      {"l", "𝕝"},   //
+      {"m", "𝕞"},   //
+      {"n", "𝕟"},   //
+      {"o", "𝕠"},   //
+      {"p", "𝕡"},   //
+      {"pi", "ℼ"},  //
+      {"q", "𝕢"},   //
+      {"r", "𝕣"},   //
+      {"s", "𝕤"},   //
+      {"t", "𝕥"},   //
+      {"u", "𝕦"},   //
+      {"v", "𝕧"},   //
+      {"w", "𝕨"},   //
+      {"x", "𝕩"},   //
+      {"y", "𝕪"},   //
+      {"z", "𝕫"},   //
   };
 
   std::string name;
@@ -799,6 +853,8 @@ Draw Parse(MathParser::FunctionContext* context, Style* style) {
     return ParseFunctionSqrt(context, style);
   if (function_name == "sum")
     return ParseFunctionSum(context, style);
+  if (function_name == "lim")
+    return ParseFunctionLimit(context, style);
   if (function_name == "int")
     return ParseFunctionIntegral(context, style);
   if (function_name == "mult")
@@ -834,6 +890,8 @@ std::wstring ParseLatex(MathParser::FunctionContext* context, Style* style) {
     return ParseFunctionSqrtLatex(context, style);
   if (function_name == "sum")
     return ParseFunctionSumLatex(context, style);
+  if (function_name == "lim")
+    return ParseFunctionLimitLatex(context, style);
   if (function_name == "int")
     return ParseFunctionIntegralLatex(context, style);
   if (function_name == "mult")
@@ -1067,38 +1125,88 @@ class Math : public Translator {
 
   std::vector<Translator::Example> Examples() final {
     return {
-        {"1-fraction", "f(x) = 1 + x / (1 + x)"},
-        {"2-square-root", "sqrt(1+sqrt(1+x/2))"},
-        {"3-power", "f(x) = 1 + x^2 + x^3 + x^(1+1/2)"},
-        {"4-subscript", "S_n = u_1 + u_2 + ... + u_n"},
-        {"5-summation", "sum(i^2,i=0,n) = n^3/2+n^2/2+n/6"},
-        {"6-integral", "int(x^2 * dx ,0,1) = n^3/3"},
-        {"7-product",
-         "mult(i^2,i=1,n) = (mult(i,i=1,n))^2\n\n\n\nmult(1/2,1,100) = "
-         "7.8886091e-31"},
-        {"8-vector", "[a;b] + [c;d] = [a+c; b+d]"},
-        {"9-matrix", "[1,2;3,4] * [x;y] = [1*x+2*y; 3*x+4*y]"},
-        {"10-factorial", "[n;k] = n! / (k! *(n-k)!)"},
-        {"11-quoted-string",
-         "\"x_n\"\n"
-         " x_n\n"},
-        {"12-braces-vs-parenthesis",
-         "A_(1+2)\n"
-         "\n"
-         "A_{1+2}\n"
-         "\n"
-         "A^{1+2}\n"},
-        {"13-Math-symbols",
-         "Alpha + alpha + Digamma + digamma + Kappa + kappa + Omicron \n"
-         "omicron + Upsilon + upsilon + Beta + beta + Zeta + zeta + Lambda \n"
-         "lambda + Pi + pi + Phi + phi + Gamma + gamma + Eta + eta + Mu + mu \n"
-         "Rho + rho + Chi + chi + Delta + delta + Theta + theta + Nu + nu \n"
-         "Sigma + sigma + Psi + psi + Epsilon + epsilon + Iota + iota + Xi\n"
-         "xi + Tau + tau + Omega + omega"},
-        {"14-mathbb",
-         "mathbb(R)\n\nbb(R)\n\nbb(ABCDEFGHIJKLMNOPQRSTUVWXYZ)\n\nbb("
-         "abcdefghijklmnopqrstuvwxyz)\n\nbb(0123456789)"},
-        {"100-continued-fraction", "psi = 1 + 1/(1+1/(1+1/(1+1/(1+...))))"},
+        {
+            "1-fraction",
+            "f(x) = 1 + x / (1 + x)",
+        },
+        {
+            "2-square-root",
+            "sqrt(1+sqrt(1+x/2))",
+        },
+        {
+            "3-power",
+            "f(x) = 1 + x^2 + x^3 + x^(1+1/2)",
+        },
+        {
+            "4-subscript",
+            "S_n = u_1 + u_2 + ... + u_n",
+        },
+        {
+            "5-summation",
+            "sum(i^2,i=0,n) = n^3/2+n^2/2+n/6",
+        },
+        {
+            "6-integral",
+            "int(x^2 * dx ,0,1) = n^3/3",
+        },
+        {
+            "7-product",
+            "mult(i^2,i=1,n) = (mult(i,i=1,n))^2\n\n\n\nmult(1/2,1,100) = "
+            "7.8886091e-31",
+        },
+        {
+            "8-vector",
+            "[a;b] + [c;d] = [a+c; b+d]",
+        },
+        {
+            "9-matrix",
+            "[1,2;3,4] * [x;y] = [1*x+2*y; 3*x+4*y]",
+        },
+        {
+            "10-factorial",
+            "[n;k] = n! / (k! *(n-k)!)",
+        },
+        {
+            "11-quoted-string",
+            "\"x_n\"\n"
+            " x_n\n",
+        },
+        {
+            "12-braces-vs-parenthesis",
+            "A_(1+2)\n"
+            "\n"
+            "A_{1+2,}\n"
+            "\n"
+            "A^{1+2,}\n",
+        },
+        {
+            "13-Math-symbols",
+            "Alpha + alpha + Digamma + digamma + Kappa + kappa + Omicron \n"
+            "omicron + Upsilon + upsilon + Beta + beta + Zeta + zeta + Lambda "
+            "\n"
+            "lambda + Pi + pi + Phi + phi + Gamma + gamma + Eta + eta + Mu + "
+            "mu \n"
+            "Rho + rho + Chi + chi + Delta + delta + Theta + theta + Nu + nu \n"
+            "Sigma + sigma + Psi + psi + Epsilon + epsilon + Iota + iota + Xi\n"
+            "xi + Tau + tau + Omega + omega",
+        },
+        {
+            "14-mathbb",
+            "mathbb(R)\n\nbb(R)\n\nbb(ABCDEFGHIJKLMNOPQRSTUVWXYZ)\n\nbb("
+            "abcdefghijklmnopqrstuvwxyz)\n\nbb(0123456789)",
+        },
+        {
+            "100-continued-fraction",
+            "psi = 1 + 1/(1+1/(1+1/(1+1/(1+...))))",
+        },
+        {
+            "15-limits",
+            "lim(x -> infinity, 1/x) = 0",
+        },
+        {
+            "100-continued-fraction",
+            "psi = 1 + 1/(1+1/(1+1/(1+1/(1+...))))",
+        },
     };
   }
 
@@ -1110,6 +1218,7 @@ class Math : public Translator {
       style.divide = L'-';
       style.multiply = L'.';
       style.greater_or_equal = L">=";
+      style.lime= L"->";
       style.lower_or_equal = L"<=";
       style.left_parenthesis_0 = L'(';
       style.left_parenthesis_1 = L'/';
@@ -1142,6 +1251,7 @@ class Math : public Translator {
       // style.multiply = L'×';
       style.multiply = L'⋅';
       style.greater_or_equal = L"≥";
+      style.lime= L"⟶";
       style.lower_or_equal = L"≤";
 
       style.left_parenthesis_0 = L'(';
@@ -1319,6 +1429,41 @@ class Math : public Translator {
 
     // Print th
     return to_string(Parse(content, &style));
+  }
+
+  std::string Highlight(const std::string& input) final {
+    std::stringstream out;
+
+    antlr4::ANTLRInputStream input_stream(input);
+
+    // Lexer.
+    MathLexer lexer(&input_stream);
+    antlr4::CommonTokenStream tokens(&lexer);
+
+    try {
+      tokens.fill();
+    } catch (...) {  // Ignore
+    }
+
+    size_t matched = 0;
+    out << "<span class='Math'>";
+    for (antlr4::Token* token : tokens.getTokens()) {
+      std::string text = token->getText();
+      if (text == "<EOF>") {
+        continue;
+      }
+      out << "<span class='";
+      out << lexer.getVocabulary().getSymbolicName(token->getType());
+      out << "'>";
+      matched += text.size();
+      out << std::move(text);
+      out << "</span>";
+    }
+
+    out << input.substr(matched);
+    out << "</span>";
+
+    return out.str();
   }
 };
 
