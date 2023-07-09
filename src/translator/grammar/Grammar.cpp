@@ -32,6 +32,12 @@ const char* css_file = nullptr;
 #include "sid/io.h"
 #include "svg/io.h"
 #include "wsn/io.h"
+
+void error_exit(const char *reason, int status) {
+  throw std::runtime_error(reason);
+}
+
+
 }
 }  // namespace kgt
 
@@ -298,21 +304,25 @@ std::string Grammar::Translate(const std::string& input,
                              ? output_function_map[option_output]
                              : kgt::rrutf8_output;
 
-  int error_count = 0;
   kgt::parsing_error_queue parsing_errors = NULL;
-  auto* model =
+  try {
+    auto* model =
       input_function(StringReader::Read, &string_reader, &parsing_errors);
+    int error = output_function(model);
+    (void)error;
+  } catch(std::runtime_error &e) {
+    std::cerr << "Parse error: " << e.what() << std::endl;
+  }
 
+  int error_count = 0;
   while (parsing_errors) {
     error_count++;
     kgt::parsing_error error;
     parsing_error_queue_pop(&parsing_errors, &error);
-    std::cout << error.line << ":" << error.column << ":" << error.description
+    std::cerr << error.line << ":" << error.column << ":" << error.description
               << std::endl;
   }
 
-  int error = output_function(model);
-  (void)error;
   fflush(stdout);
   dup2(old_stdout, 1);
   close(old_stdout);
