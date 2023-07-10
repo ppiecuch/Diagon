@@ -216,13 +216,10 @@ if (EMSCRIPTEN)
   #set_target_properties(diagon PROPERTIES SUFFIX ".wasm")
 
 else()
-<<<<<<< HEAD
   target_link_libraries(diagon_lib PRIVATE -static-libstdc++)
   if(NOT APPLE)
     target_link_libraries(diagon_lib PRIVATE stdc++fs)
   endif()
-=======
->>>>>>> 81d56ea7402f15813ffc7ca0a309b84c7b366035
   install(TARGETS diagon RUNTIME DESTINATION "bin")
 endif()
 
