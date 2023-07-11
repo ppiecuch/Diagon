@@ -1,0 +1,216 @@
+diff --git a/src/abnf/parser.c b/src/abnf/parser.c
+index 76a0488..975bc21 100644
+--- a/src/abnf/parser.c
++++ b/src/abnf/parser.c
+@@ -280,8 +280,7 @@
+ 
+ 		s = xstrdup(lex_state->a);
+ 		if (s == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		lex_state->p = lex_state->a;
+@@ -506,7 +505,7 @@ ZL1:;
+ #line 717 "src/parser.act"
+ 
+ 		err(lex_state, "Syntax error");
+-		exit(EXIT_FAILURE);
++		error_exit("Syntax error", EXIT_FAILURE);
+ 	
+ #line 512 "src/abnf/parser.c"
+ 		}
+@@ -674,8 +673,7 @@ prod_term(lex_state lex_state, act_state act_state, map_term *ZOt)
+ 
+ 		ZIx = xstrdup(lex_state->buf.a);
+ 		if (ZIx == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 	
+ #line 682 "src/abnf/parser.c"
+@@ -838,8 +836,7 @@ prod_term(lex_state lex_state, act_state act_state, map_term *ZOt)
+ 
+ 		ZIx.p = xstrdup(lex_state->buf.a);
+ 		if (ZIx.p == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		if (-1 == string(lex_state->buf.a, &ZIx,  2)) {
+@@ -868,8 +865,7 @@ prod_term(lex_state lex_state, act_state act_state, map_term *ZOt)
+ 
+ 		ZIx.p = xstrdup(lex_state->buf.a);
+ 		if (ZIx.p == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		if (-1 == string(lex_state->buf.a, &ZIx, 10)) {
+@@ -898,8 +894,7 @@ prod_term(lex_state lex_state, act_state act_state, map_term *ZOt)
+ 
+ 		ZIx.p = xstrdup(lex_state->buf.a);
+ 		if (ZIx.p == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		if (-1 == string(lex_state->buf.a, &ZIx, 16)) {
+@@ -977,8 +972,7 @@ prod_rule(lex_state lex_state, act_state act_state, map_rule *ZOr)
+ 
+ 		ZIs = xstrdup(lex_state->buf.a);
+ 		if (ZIs == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 	
+ #line 985 "src/abnf/parser.c"
+diff --git a/src/bnf/parser.c b/src/bnf/parser.c
+index 9bb28f3..b251824 100644
+--- a/src/bnf/parser.c
++++ b/src/bnf/parser.c
+@@ -280,8 +280,7 @@
+ 
+ 		s = xstrdup(lex_state->a);
+ 		if (s == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		lex_state->p = lex_state->a;
+@@ -504,7 +503,7 @@ ZL1:;
+ #line 717 "src/parser.act"
+ 
+ 		err(lex_state, "Syntax error");
+-		exit(EXIT_FAILURE);
++		error_exit("Syntax error", EXIT_FAILURE);
+ 	
+ #line 510 "src/bnf/parser.c"
+ 		}
+diff --git a/src/iso-ebnf/parser.c b/src/iso-ebnf/parser.c
+index 870722f..5b97364 100644
+--- a/src/iso-ebnf/parser.c
++++ b/src/iso-ebnf/parser.c
+@@ -280,8 +280,7 @@
+ 
+ 		s = xstrdup(lex_state->a);
+ 		if (s == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		lex_state->p = lex_state->a;
+@@ -520,7 +519,7 @@ ZL1:;
+ #line 717 "src/parser.act"
+ 
+ 		err(lex_state, "Syntax error");
+-		exit(EXIT_FAILURE);
++		error_exit("Syntax error", EXIT_FAILURE);
+ 	
+ #line 526 "src/iso-ebnf/parser.c"
+ 		}
+@@ -688,8 +687,7 @@ prod_term(lex_state lex_state, act_state act_state, map_term *ZOt)
+ 
+ 		ZIs = xstrdup(lex_state->buf.a);
+ 		if (ZIs == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 	
+ #line 696 "src/iso-ebnf/parser.c"
+@@ -784,8 +782,7 @@ prod_rule(lex_state lex_state, act_state act_state, map_rule *ZOr)
+ 
+ 		ZIs = xstrdup(lex_state->buf.a);
+ 		if (ZIs == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 	
+ #line 792 "src/iso-ebnf/parser.c"
+diff --git a/src/parsing_error.h b/src/parsing_error.h
+index bf910a0..ae38732 100644
+--- a/src/parsing_error.h
++++ b/src/parsing_error.h
+@@ -27,4 +27,6 @@ typedef parsing_error_queue_element* parsing_error_queue;
+ void parsing_error_queue_push(parsing_error_queue* queue, parsing_error error);
+ int parsing_error_queue_pop(parsing_error_queue* queue, parsing_error* error);
+ 
++void error_exit(const char *reason, int status);
++
+ #endif // KGT_PARSING_ERROR_H
+diff --git a/src/rbnf/parser.c b/src/rbnf/parser.c
+index 511620f..c1d0377 100644
+--- a/src/rbnf/parser.c
++++ b/src/rbnf/parser.c
+@@ -280,8 +280,7 @@
+ 
+ 		s = xstrdup(lex_state->a);
+ 		if (s == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		lex_state->p = lex_state->a;
+@@ -560,7 +559,7 @@ ZL1:;
+ #line 717 "src/parser.act"
+ 
+ 		err(lex_state, "Syntax error");
+-		exit(EXIT_FAILURE);
++		error_exit("Syntax error", EXIT_FAILURE);
+ 	
+ #line 566 "src/rbnf/parser.c"
+ 		}
+diff --git a/src/wsn/parser.c b/src/wsn/parser.c
+index 44daa62..3629a47 100644
+--- a/src/wsn/parser.c
++++ b/src/wsn/parser.c
+@@ -280,8 +280,7 @@
+ 
+ 		s = xstrdup(lex_state->a);
+ 		if (s == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 
+ 		lex_state->p = lex_state->a;
+@@ -669,8 +668,7 @@ prod_term(lex_state lex_state, act_state act_state, map_term *ZOt)
+ 
+ 		ZIs = xstrdup(lex_state->buf.a);
+ 		if (ZIs == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 	
+ #line 677 "src/wsn/parser.c"
+@@ -780,8 +778,7 @@ prod_rule(lex_state lex_state, act_state act_state, map_rule *ZOr)
+ 
+ 		ZIs = xstrdup(lex_state->buf.a);
+ 		if (ZIs == NULL) {
+-			perror("xstrdup");
+-			exit(EXIT_FAILURE);
++			error_exit("xstrdup", EXIT_FAILURE);
+ 		}
+ 	
+ #line 788 "src/wsn/parser.c"
+@@ -907,7 +904,7 @@ ZL1:;
+ #line 717 "src/parser.act"
+ 
+ 		err(lex_state, "Syntax error");
+-		exit(EXIT_FAILURE);
++		error_exit("Syntax error", EXIT_FAILURE);
+ 	
+ #line 913 "src/wsn/parser.c"
+ 		}

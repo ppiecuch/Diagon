@@ -1,0 +1,6 @@
+# desktop and editor files
+.DS_Store
+
+# object files
+*.o 
+*.d
