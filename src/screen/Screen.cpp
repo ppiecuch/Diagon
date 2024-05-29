@@ -7,6 +7,7 @@
 #include <codecvt>
 #include <locale>
 #include <sstream>
+#include <cassert>
 
 std::string to_string(const std::wstring& s) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
